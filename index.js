@@ -55,6 +55,11 @@ const dbName = 'counter-integration'
       res.send(responseMessage)
     })
 
+    app.get('*', (req, res) => {
+      console.log(`GET /${req.path}`)
+      res.send(`404 /${req.path}`)
+    })
+
     app.listen(process.env.PORT, () => console.log(`Listening on ${process.env.PORT}`))
   } catch (e) {
     console.log('CRASHED')
