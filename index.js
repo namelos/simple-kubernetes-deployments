@@ -1,20 +1,43 @@
 const express = require('express')
+const { MongoClient } = require('mongodb')
 const os = require('os')
 const app = express()
 
-let counter = 0
+let collection = null
+const dbName = 'counter-integration'
 
-app.get('/', (req, res) => {
+;(async () => {
+  try {
+    const client = await MongoClient.connect(process.env.MONGO)
+
+    const db = client.db(dbName)
+    collection = db.collection('counter')
+
+    const counter = await collection.findOne()
+
+    if (!counter && counter !== 0) {
+      await collection.insertOne({ n: 0 })
+    }
+  } catch (e) {
+    console.log('CRASHED')
+    console.log(e)
+  }
+})()
+
+app.get('/', async (req, res) => {
   console.log('GET /')
-  console.log(`RESPONSE: ${counter}\n`)
-  res.send(`${counter}\n`)
+  const counter = await collection.findOne()
+  console.log(`RESPONSE: ${counter.n}\n`)
+  res.send(`${counter.n}\n`)
 })
 
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
   console.log('POST /')
+  let counter = await collection.findOne()
   counter++
-  console.log(`RESPONSE: ${counter}\n`)
-  res.send(`${counter}\n`)
+  await collection.update({ _id: counter._id }, { n: counter.n })
+  console.log(`RESPONSE: ${counter.n}\n`)
+  res.send(`${counter.n}\n`)
 })
 
 app.get('/env/:name', (req, res) => {
